@@ -32,23 +32,23 @@ class BridgePoseAngleChecker:
             'right_ankle': 28
         }
 
-        # Approximate "ideal" Bridge Pose in normalized coordinates (side view).
-        # The user is on their back with knees bent:
-        # - ankles near y=0.90, knees ~ y=0.75, hips lifted ~ y=0.60
-        # - shoulders near y=0.90 on the ground, torso forming a diagonal from shoulders to knees
+        # Approximate "ideal" Bridge Pose in normalized coordinates (front-facing camera).
+        # The user is on their back with knees bent and hips lifted.
+        # Left landmarks sit at x~0.38, right landmarks at x~0.62 to reflect
+        # the horizontal separation MediaPipe sees from a front-facing webcam.
         self.ideal_pose = {
-            'left_ankle':    [0.50, 0.90],
-            'right_ankle':   [0.50, 0.90],
-            'left_knee':     [0.50, 0.75],
-            'right_knee':    [0.50, 0.75],
-            'left_hip':      [0.50, 0.60],
-            'right_hip':     [0.50, 0.60],
-            'left_shoulder': [0.50, 0.90],
-            'right_shoulder':[0.50, 0.90],
-            'left_elbow':    [0.50, 0.88],
-            'right_elbow':   [0.50, 0.88],
-            'left_wrist':    [0.50, 0.95],
-            'right_wrist':   [0.50, 0.95]
+            'left_ankle':    [0.38, 0.90],
+            'right_ankle':   [0.62, 0.90],
+            'left_knee':     [0.38, 0.75],
+            'right_knee':    [0.62, 0.75],
+            'left_hip':      [0.38, 0.60],
+            'right_hip':     [0.62, 0.60],
+            'left_shoulder': [0.38, 0.88],
+            'right_shoulder':[0.62, 0.88],
+            'left_elbow':    [0.38, 0.86],
+            'right_elbow':   [0.62, 0.86],
+            'left_wrist':    [0.38, 0.95],
+            'right_wrist':   [0.62, 0.95]
         }
 
         # Define which joints' angles we care about:

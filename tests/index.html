@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YogaFix Pose Trainer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header>
+    <h1>🧘 YogaFix Pose Correction</h1>
+    <!-- 🌙 Theme Toggle -->
+    <button id="themeToggle" class="theme-btn">🌙 Toggle Theme</button>
+  </header>
+
+  <div class="container">
+
+    <!-- 🎥 VIDEO SECTION -->
+    <div class="video-container">
+      <div id="welcome-message">
+        <h2>Welcome to YogaFix Pose Correction</h2>
+        <p>
+          Select a pose from the right and click <strong>“Start Training”</strong>.<br>
+          Please wait a few seconds for the webcam to start.
+        </p>
+      </div>
+
+      <img id="video" alt="Live Yoga Feed" />
+
+      <!-- ⏱ TIMER DISPLAY -->
+      <div class="timer-box">
+        ⏱ Session Time: <span id="timer">0 sec</span>
+      </div>
+    </div>
+
+    <!-- 🎛 CONTROLS -->
+    <div class="controls">
+      <h2>Choose Your Pose</h2>
+
+      <select id="poseSelect">
+        <option value="T">T Pose</option>
+        <option value="Triangle">Triangle Pose</option>
+        <option value="Tree">Tree Pose</option>
+        <option value="Warrior">Warrior Pose</option>
+        <option value="Bridge">Bridge Pose</option>
+        <option value="Cobra">Cobra Pose</option>
+        <option value="Downward Dog">Downward Dog</option>
+        <option value="Lotus">Lotus Pose</option>
+      </select>
+
+      <!-- 🕒 Feedback Speed -->
+      <label for="feedbackDelay" style="margin-top: 10px; display: block;">
+        🕒 Feedback Speed:
+      </label>
+      <select id="feedbackDelay">
+        <option value="0.3">Fast</option>
+        <option value="0.7" selected>Normal</option>
+        <option value="1.5">Slow</option>
+      </select>
+
+      <!-- ▶️ CONTROLS -->
+      <button class="start-btn" id="startBtn">Start Training</button>
+      <button class="stop-btn" id="stopBtn">Stop</button>
+
+      <!-- 📊 FEEDBACK -->
+      <div class="feedback-box">
+        <h3>📊 Feedback & Similarity</h3>
+        <div id="feedback-content">
+          Feedback and similarity score will appear here.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

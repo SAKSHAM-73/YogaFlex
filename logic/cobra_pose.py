@@ -32,25 +32,26 @@ class CobraPoseAngleChecker:
             'right_ankle': 28
         }
         
-        # Approximate "ideal" Cobra Pose in normalized coordinates (side view).
-        # The hips are on/near the ground (y ~ 0.70), shoulders significantly higher
-        # (y ~ 0.45), elbows bent near the ribcage, legs extended behind.
+        # Approximate "ideal" Cobra Pose in normalized coordinates (front-facing camera).
+        # The hips are near the ground (y~0.70), shoulders significantly higher (y~0.45).
+        # Left landmarks at x~0.38, right landmarks at x~0.62 to match the horizontal
+        # separation MediaPipe sees from a standard front-facing webcam.
         self.ideal_pose = {
             # Legs extended
-            'left_ankle':    [0.50, 0.90],
-            'right_ankle':   [0.50, 0.90],
-            'left_knee':     [0.50, 0.80],
-            'right_knee':    [0.50, 0.80],
-            'left_hip':      [0.50, 0.70],
-            'right_hip':     [0.50, 0.70],
+            'left_ankle':    [0.38, 0.90],
+            'right_ankle':   [0.62, 0.90],
+            'left_knee':     [0.38, 0.80],
+            'right_knee':    [0.62, 0.80],
+            'left_hip':      [0.38, 0.70],
+            'right_hip':     [0.62, 0.70],
             # Torso lifted
-            'left_shoulder': [0.50, 0.45],
-            'right_shoulder':[0.50, 0.45],
+            'left_shoulder': [0.38, 0.45],
+            'right_shoulder':[0.62, 0.45],
             # Arms supporting
-            'left_elbow':    [0.52, 0.55],
-            'right_elbow':   [0.48, 0.55],
-            'left_wrist':    [0.52, 0.60],
-            'right_wrist':   [0.48, 0.60]
+            'left_elbow':    [0.38, 0.55],
+            'right_elbow':   [0.62, 0.55],
+            'left_wrist':    [0.38, 0.65],
+            'right_wrist':   [0.62, 0.65]
         }
         
         # Define which joints' angles we care about:

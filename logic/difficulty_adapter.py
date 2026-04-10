@@ -13,6 +13,7 @@ Falls back gracefully when there's not enough data yet
 """
 
 import json
+import random
 from collections import defaultdict
 from typing import Optional
 
@@ -42,12 +43,28 @@ def _kmeans_1d(values: list[float], k: int = 3, iterations: int = 100):
     """
     Minimal 1-D K-Means. Returns (labels, centroids).
     labels[i] ∈ {0,1,...,k-1}
+
+    FIX 1 — deterministic results: seed before any sampling.
+    FIX 2 — crash-safe on uniform/low-variety data: deduplicate values
+             before sampling and reduce k to fit unique count, with a
+             zero-division guard in the cluster update step.
     """
-    import random
+    # FIX 1 — seed for deterministic, reproducible results
+    random.seed(42)
+
     if len(values) < k:
         return list(range(len(values))), sorted(values)
 
-    centroids = sorted(random.sample(values, k))
+    # FIX 2 — deduplicate before sampling; random.sample on a list of
+    # identical values silently picks duplicate centroids, causing the
+    # update step to divide by zero or produce NaN centroids
+    unique = list(set(values))
+    if len(unique) < k:
+        k = len(unique)   # reduce k to number of distinct values
+    if k == 0:
+        return [], []
+
+    centroids = sorted(random.sample(unique, k))
 
     for _ in range(iterations):
         # Assignment
@@ -55,7 +72,7 @@ def _kmeans_1d(values: list[float], k: int = 3, iterations: int = 100):
             min(range(k), key=lambda j: abs(v - centroids[j]))
             for v in values
         ]
-        # Update
+        # Update — FIX 2: guard against empty cluster (division by zero)
         new_centroids = []
         for j in range(k):
             cluster = [values[i] for i, l in enumerate(labels) if l == j]

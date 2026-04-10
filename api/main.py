@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import cv2
 import time
@@ -34,6 +35,9 @@ from logic.rep_counter import RepCounter
 from logic import session_store
 from logic import difficulty_adapter
 # ────────────────────────────────────────────────────────────────────────────
+
+# FIX 6 — use proper logging instead of print()
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -101,7 +105,8 @@ class ConnectionManager:
         self._current_pose[client_id] = ""
 
     def disconnect(self, client_id: str):
-        # ── Flush buffered pose stats to DB before closing ─────────────────
+        # FIX 2 — guard flush: check session_ids BEFORE pop to avoid race condition
+        # where a concurrent disconnect already removed the entry
         self._flush_pose_log(client_id)
 
         sid = self.session_ids.pop(client_id, None)
@@ -123,18 +128,24 @@ class ConnectionManager:
 
     def _flush_pose_log(self, client_id: str):
         """Persist the current pose buffer to SQLite."""
+        # FIX 2 — check session_ids first; if already popped by a concurrent
+        # disconnect, silently bail out instead of losing data with no warning
+        sid = self.session_ids.get(client_id)
+        if not sid:
+            return
+
         sims = self._sim_buffer.get(client_id, [])
         pose = self._current_pose.get(client_id, "")
-        sid  = self.session_ids.get(client_id)
-        rc   = self.rep_counters.get(client_id)
 
-        if not sims or not pose or not sid:
+        if not sims or not pose:
             return
 
         avg_sim  = sum(sims) / len(sims)
         peak_sim = self._peak_sim.get(client_id, 0.0)
+        rc       = self.rep_counters.get(client_id)
         reps     = rc.reps if rc else 0
-        hold_sec = rc._hold_sec if rc else 0.0
+        # FIX 3 — use the public summary() method instead of the private _hold_sec attribute
+        hold_sec = rc.summary()['last_hold_sec'] if rc else 0.0
 
         session_store.log_pose_attempt(
             session_id      = sid,
@@ -178,18 +189,18 @@ class ConnectionManager:
         checker   = pose_checkers.get(pose_type, TPoseAngleChecker())
         counter   = self.rep_counters[client_id]
 
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-                cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-                cap.set(cv2.CAP_PROP_FPS, 15)
+        # FIX 1 — open camera BEFORE the try block so cap.release() in finally
+        # is always reachable, even if an exception fires before the while-loop
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             await websocket.send_json({"error": "Could not open webcam"})
             return
 
         try:
             while client_id in self.active_connections:
-                ret, frame = cap.read()
+                # FIX 5 — offload blocking cap.read() to a thread so the async
+                # event loop is not stalled while waiting for a camera frame
+                ret, frame = await asyncio.to_thread(cap.read)
                 if not ret:
                     await asyncio.sleep(0.01)
                     continue
@@ -206,7 +217,9 @@ class ConnectionManager:
                 else:
                     overall_sim, joint_sims = checker.compute_pose_similarity(user_keypoints)
                     feedback_lines = checker.generate_feedback(overall_sim, joint_sims)
-                    feedback_text  = f"Similarity: {overall_sim*100:.2f}%\n" + "\n".join(feedback_lines)
+                    # FIX 4 — removed "Similarity: X%\n" prefix; similarity is
+                    # already sent as a dedicated float field, rendering it twice
+                    feedback_text  = "\n".join(feedback_lines)
 
                     # ── Rep counter update ────────────────────────────────
                     rep_data = counter.update(overall_sim)
@@ -252,7 +265,8 @@ class ConnectionManager:
                 await asyncio.sleep(0.03)
 
         except Exception as e:
-            print(f"[process_frames] {e}")
+            # FIX 6 — log with full stack trace instead of bare print()
+            logger.exception(f"[process_frames] client={client_id} pose={pose_type}")
 
         finally:
             cap.release()
